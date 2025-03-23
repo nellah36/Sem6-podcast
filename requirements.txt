@@ -1,0 +1,13 @@
+modal
+streamlit
+feedparser
+requests
+ffmpeg-python
+openai
+tiktoken
+wikipedia
+googlesearch-python
+torch
+torchvision
+torchaudio
+git+https://github.com/m-bain/whisperx.git
