@@ -5,7 +5,7 @@ Welcome to the Podcast Summarizer project! This tool allows you to automatically
 ## Project Demo GIF
 
 <div align="center">
-   <img src="content/podcast/podcast.gif" width="100%" max-width="800"/>
+   <img src="content/podcast/group-8-mini-sem-6.gif" width="100%" max-width="800"/>
 </div>
 
 ## Demo
@@ -41,17 +41,26 @@ To run this project locally, follow these steps:
    git clone https://github.com/tekeburak/podcast-summarizer.git
    cd podcast-summarizer
 
+   ```
+
 2. Install the required dependencies using pip:
+
    ```bash
    pip install streamlit modal
 
+   ```
+
 3. Deploy backend to Modal:
+
    ```bash
    modal deploy /content/podcast/podcast_backend.py
+
+   ```
 
 4. Run the Streamlit app:
    ```bash
    streamlit run podcast_frontend.py
+   ```
 
 ### Local Usage
 
