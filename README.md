@@ -1,6 +1,6 @@
 # Podcast Summarizer
 
-Welcome to the Podcast Summarizer project! This tool allows you to automatically summarize podcast episodes by providing the RSS feed URL of the podcast. The underlying technology involves utilizing various AI models to extract meaningful content from podcast episodes and present them in a summarized form.
+Welcome to the Podcast Summarizer project – a personal tool designed to automatically extract and condense the key points from podcast episodes using AI. Simply provide the RSS feed URL, and the project downloads, transcribes, and summarizes the episode for you.
 
 ## Project Demo GIF
 
@@ -9,78 +9,85 @@ Welcome to the Podcast Summarizer project! This tool allows you to automatically
 </div>
 ![Podcast Summarizer Demo](content/podcast/your_gif_name.gif)
 
+## Demo Overview
 
-## Demo
+Watch the demo GIF to see the process in action:
 
-Here's a breakdown of what's happening in the demo GIF:
-
-1. You open the app and navigate to the main page.
-2. Find a podcast RSS feed URL from [Listen Notes](https://www.listennotes.com) or [Castos](https://castos.com/tools/find-podcast-rss-feed/).
-3. You input the RSS feed URL of the podcast episode you want to summarize.
+1. The app opens and displays the main page.
+2. You obtain a podcast RSS feed URL from sources like [Listen Notes](https://www.listennotes.com) or [Castos](https://castos.com/tools/find-podcast-rss-feed/).
+3. You paste the RSS feed URL into the input field.
 4. You click the "Process a Podcast Feed" button.
-5. The app downloads the podcast episode in mp3 format.
-6. The WhisperX model transcribes the speech to text.
-7. The ChatGPT 3.5 Turbo model generates a summary.
-8. [5.](#demo), [6.](#demo) and [7.](#demo) are running using GPU in [Modal](https://modal.com) backend.
-9. The [Streamlit](https://streamlit.io) frontend displays the summary, episode details, guest info, and highlights.
+5. The app downloads the episode in MP3 format.
+6. The WhisperX model transcribes the audio into text.
+7. The ChatGPT 3.5 Turbo model then generates a concise summary.
+8. Steps 5, 6, and 7 run on a GPU-powered backend deployed on [Modal](https://modal.com), while the summary and related details are displayed via a [Streamlit](https://streamlit.io) frontend.
 
-Feel free to explore the interface and generate summaries for your favorite podcasts!
+## Key Features
 
-## Features
+- **Automated Summarization:**  
+  Automatically downloads podcast episodes, transcribes the speech, and generates concise summaries using AI.
 
-- **Automated Summarization:** Using the power of AI, this project can automatically download podcast episodes, transcribe the speech to text, and generate concise summaries.
-- **WhisperX for Transcription:** The project employs the WhisperX model to convert spoken words in podcast episodes into text.
-- **ChatGPT 3.5 Turbo for Summarization:** The OpenAI ChatGPT 3.5 Turbo model is used to create informative and coherent summaries based on the transcribed text.
-- **Frontend with Streamlit:** The summarized content, along with episode details, guest information, and highlights are presented through an interactive and user-friendly Streamlit frontend.
+- **WhisperX Transcription:**  
+  Uses the WhisperX model to accurately convert podcast audio into text.
 
-## Installation
+- **ChatGPT 3.5 Turbo Summaries:**  
+  Leverages ChatGPT 3.5 Turbo to create informative and coherent summaries from the transcript.
 
-To run this project locally, follow these steps:
+- **Sentiment Analysis:**  
+  Provides sentiment scores and interpretations to help you gauge the overall tone of the episode.
 
-1. Clone the repository:
+- **Docker & Modal Integration:**  
+  The project includes a custom Dockerfile for containerization and is deployed on Modal for scalable GPU-powered processing.
+
+- **Streamlit Frontend:**  
+  A clean, interactive interface displays episode details, guest info, key highlights, and sentiment analysis.
+
+## Installation & Setup
+
+To run this project locally:
+
+1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/tekeburak/podcast-summarizer.git
+   git clone https://github.com/yourusername/podcast-summarizer.git
    cd podcast-summarizer
 
-   ```
+Install Dependencies:
 
-2. Install the required dependencies using pip:
+pip install streamlit modal
 
-   ```bash
-   pip install streamlit modal
+Deploy the Backend on Modal:
 
-   ```
+modal deploy /content/podcast/podcast_backend.py
 
-3. Deploy backend to Modal:
+Run the Streamlit Frontend:
 
-   ```bash
-   modal deploy /content/podcast/podcast_backend.py
+    streamlit run podcast_frontend.py
 
-   ```
+Local Usage
 
-4. Run the Streamlit app:
-   ```bash
-   streamlit run podcast_frontend.py
-   ```
+    Open your browser and navigate to http://localhost:8501.
 
-### Local Usage
+    Paste a podcast RSS feed URL into the input field.
 
-1. Access the Streamlit frontend by opening a web browser and navigating to [http://localhost:8501](localhost:8501).
-2. On the homepage, you'll find an input field where you can paste the RSS feed URL of the podcast you want to summarize.
-3. Click the "Process a Podcast Feed" button to initiate the summarization process.
-4. The app will start by downloading the podcast episode in mp3 format and then use the WhisperX model to transcribe the speech to text.
-5. Once transcribed, the text data is fed into the ChatGPT 3.5 Turbo model to generate a summary.
-6. The summary, along with episode details, guest information, and highlights, will be displayed on the Streamlit interface.
+    Click the "Process a Podcast Feed" button to begin the process.
 
-## Contributing
+    The app downloads the episode, transcribes it, generates a summary, and displays all relevant details along with sentiment analysis on-screen.
 
-1. Fork the repository.
-2. Create a new branch for your feature: `git checkout -b feature-name`.
-3. Implement your feature and make necessary changes.
-4. Commit and push your changes: `git commit -m "Add feature" && git push origin feature-name`.
-5. Submit a pull request detailing the changes you've made.
+Contributing
 
-## License
+We welcome contributions! To get started:
 
-This project is licensed under the [MIT License](LICENSE).
+    Fork the repository.
+
+    Create a new branch (git checkout -b feature-name).
+
+    Implement your feature or improvement.
+
+    Commit your changes (git commit -m "Add feature"), then push your branch (git push origin feature-name).
+
+    Open a pull request detailing your changes.
+
+License
+
+This project is licensed under the MIT License.
