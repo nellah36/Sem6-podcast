@@ -3,6 +3,7 @@ import modal
 import json
 import os
 import base64
+import pandas as pd
 
 # Custom CSS for a dark theme with refined typography and layout adjustments.
 def set_custom_css():
@@ -108,8 +109,12 @@ def main():
     # Main content: Podcast selection from existing ones (displayed below the RSS input)
     available_podcast_info = create_dict_from_json_files('content')
     if available_podcast_info:
-        selected_podcast = st.selectbox("Select Podcast", options=list(available_podcast_info.keys()),
-                                          index=len(available_podcast_info.keys()) - 1)
+        keys = list(available_podcast_info.keys())
+        if 'selected_podcast' in st.session_state and st.session_state['selected_podcast'] in keys:
+            default_index = keys.index(st.session_state['selected_podcast'])
+        else:
+            default_index = len(keys) - 1
+        selected_podcast = st.selectbox("Select Podcast", options=keys, index=default_index)
         if selected_podcast:
             podcast_info = available_podcast_info[selected_podcast]
             st.markdown(f"<h2 class='section-header'>{podcast_info['podcast_details']['podcast_title']}</h2>", unsafe_allow_html=True)
@@ -142,6 +147,28 @@ def main():
             st.markdown("<h3 class='section-header'>Key Moments</h3>", unsafe_allow_html=True)
             for moment in podcast_info['podcast_highlights'].split('\n'):
                 st.markdown(f"<p style='margin-bottom: 5px;'>{moment}</p>", unsafe_allow_html=True)
+            
+            # Display Sentiment Analysis in a table format
+            st.markdown("<h3 class='section-header'><strong>Sentiment Analysis</strong></h3>", unsafe_allow_html=True)
+            sentiment = podcast_info.get("podcast_sentiment", {})
+            if sentiment:
+                overall = sentiment.get("overall", {})
+                interpretation = sentiment.get("interpretation", "")
+                explanation = sentiment.get("metrics_explanation", {})
+                metrics_data = []
+                for key in ['compound', 'pos', 'neu', 'neg']:
+                    metrics_data.append({
+                        "Metric": key.upper(),
+                        "Value": f"{overall.get(key):.2f}",
+                        "Description": explanation.get(key, "")
+                    })
+                st.table(pd.DataFrame(metrics_data))
+                st.markdown(f"**Interpretation:** {interpretation}")
+                speakers = sentiment.get("speakers", {})
+                if speakers:
+                    st.write("Speaker Sentiments:")
+                    for speaker, scores in speakers.items():
+                        st.write(f"{speaker}: Compound: {scores.get('compound'):.2f}, Pos: {scores.get('pos'):.2f}, Neu: {scores.get('neu'):.2f}, Neg: {scores.get('neg'):.2f}")
     else:
         st.info("No podcasts processed yet. Please add a new RSS feed above.")
     
@@ -157,7 +184,8 @@ def main():
             save_path = os.path.join('content', new_podcast_name)
             with open(save_path, 'w') as json_file:
                 json.dump(podcast_info, json_file, indent=4)
-            st.experimental_rerun()
+            st.session_state['selected_podcast'] = new_podcast_name
+            st.rerun()
 
 def create_dict_from_json_files(folder_path):
     json_files = [f for f in os.listdir(folder_path) if f.endswith('.json')]

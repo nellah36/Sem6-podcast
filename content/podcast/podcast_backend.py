@@ -17,7 +17,7 @@ podcast_image = modal.Image.from_dockerfile("Dockerfile")\
         "feedparser",
         "requests",
         "ffmpeg",
-        "openai",
+        "openai==0.28",  # Pin openai to version 0.28 to use the legacy API.
         "tiktoken",
         "wikipedia",
         "ffmpeg-python",
@@ -107,7 +107,7 @@ def get_transcribe_podcast(rss_url: str, local_path: str):
 @app.function(image=podcast_image, secrets=[modal.Secret.from_name("my-openai-secret")])
 def get_podcast_summary(podcast_transcript: str) -> str:
     import openai, tiktoken
-    enc = tiktoken.encoding_for_model("gpt-3.5-turbo-16k-0613")
+    enc = tiktoken.encoding_for_model("gpt-3.5-turbo-16k")
     if len(enc.encode(podcast_transcript)) >= 16385:
         print("Transcript too long for summary generation.")
         return ""
@@ -119,7 +119,7 @@ def get_podcast_summary(podcast_transcript: str) -> str:
     request = instructPrompt + podcast_transcript
     print("Generating podcast summary...")
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k-0613",
+        model="gpt-3.5-turbo-16k",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": request},
@@ -137,7 +137,7 @@ def get_podcast_guest(podcast_transcript: str) -> dict:
     snippet = podcast_transcript[:15000]
     print("Generating podcast guest information...")
     completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k-0613",
+        model="gpt-3.5-turbo-16k",
         messages=[{"role": "user", "content": snippet}],
         max_tokens=256,
         functions=[
@@ -200,7 +200,7 @@ def get_podcast_guest(podcast_transcript: str) -> dict:
 @app.function(image=podcast_image, secrets=[modal.Secret.from_name("my-openai-secret")])
 def get_podcast_highlights(podcast_transcript: str) -> str:
     import openai, tiktoken
-    enc = tiktoken.encoding_for_model("gpt-3.5-turbo-16k-0613")
+    enc = tiktoken.encoding_for_model("gpt-3.5-turbo-16k")
     if len(enc.encode(podcast_transcript)) >= 16385:
         print("Transcript too long for highlights generation.")
         return ""
@@ -221,7 +221,7 @@ def get_podcast_highlights(podcast_transcript: str) -> str:
     request = instructPrompt + podcast_transcript
     print("Generating podcast highlights...")
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k-0613",
+        model="gpt-3.5-turbo-16k",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": request},
@@ -231,6 +231,77 @@ def get_podcast_highlights(podcast_transcript: str) -> str:
     highlights = response.choices[0].message.content
     print("Podcast highlights generated.")
     return highlights
+
+# New Sentiment Analysis Function using VADER with custom adjustments and interpretation
+@app.function(image=podcast_image)
+def get_podcast_sentiment(podcast_transcript: str) -> dict:
+    import nltk
+    from nltk.sentiment.vader import SentimentIntensityAnalyzer
+    nltk.download('vader_lexicon', quiet=True)
+    analyzer = SentimentIntensityAnalyzer()
+    
+    # Overall sentiment
+    overall_sentiment = analyzer.polarity_scores(podcast_transcript)
+    
+    # Speaker-level sentiment (if transcript is formatted as "Speaker: text")
+    speaker_texts = {}
+    for line in podcast_transcript.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if ":" in line:
+            speaker, text = line.split(":", 1)
+            speaker = speaker.strip()
+            text = text.strip()
+            if speaker in speaker_texts:
+                speaker_texts[speaker] += " " + text
+            else:
+                speaker_texts[speaker] = text
+    speakers_sentiment = {speaker: analyzer.polarity_scores(text) for speaker, text in speaker_texts.items()}
+    
+    # Custom adjustment: modify overall compound score based on keywords
+    positive_keywords = ["exciting", "amazing", "fantastic", "inspiring", "excellent"]
+    negative_keywords = ["terrible", "awful", "bad", "poor", "disappointing"]
+    adjustment = 0.0
+    transcript_lower = podcast_transcript.lower()
+    for word in positive_keywords:
+        if word in transcript_lower:
+            adjustment += 0.02
+    for word in negative_keywords:
+        if word in transcript_lower:
+            adjustment -= 0.02
+    overall_sentiment["compound"] = max(min(overall_sentiment["compound"] + adjustment, 1.0), -1.0)
+    
+    # Interpretation based on compound score
+    def interpret_sentiment(overall):
+        compound = overall.get("compound", 0)
+        if compound >= 0.7:
+            return "The podcast expresses a highly positive and enthusiastic tone."
+        elif compound >= 0.3:
+            return "The podcast has a moderately positive tone."
+        elif compound > -0.3:
+            return "The podcast tone is neutral."
+        elif compound > -0.7:
+            return "The podcast has a moderately negative tone."
+        else:
+            return "The podcast expresses a highly negative tone."
+    
+    interpretation = interpret_sentiment(overall_sentiment)
+    
+    # Explanation of metrics for the user
+    metrics_explanation = {
+        "compound": "Overall sentiment score from -1 (extremely negative) to +1 (extremely positive).",
+        "pos": "Proportion of text considered positive.",
+        "neu": "Proportion of text considered neutral.",
+        "neg": "Proportion of text considered negative."
+    }
+    
+    return {
+        "overall": overall_sentiment,
+        "speakers": speakers_sentiment,
+        "interpretation": interpretation,
+        "metrics_explanation": metrics_explanation
+    }
 
 @app.function(image=podcast_image, secrets=[modal.Secret.from_name("my-openai-secret")], timeout=1800)
 def process_podcast(url: str, path: str) -> dict:
@@ -245,9 +316,17 @@ def process_podcast(url: str, path: str) -> dict:
     print("Calling get_podcast_guest...")
     guest = get_podcast_guest.remote(details["episode_transcript"])
     print("Guest info job submitted.")
+    print("Calling get_podcast_highlights...")
+    highlights = get_podcast_highlights.remote(details["episode_transcript"])
+    print("Highlights job submitted.")
+    print("Calling get_podcast_sentiment...")
+    sentiment = get_podcast_sentiment.remote(details["episode_transcript"])
+    print("Sentiment analysis job submitted.")
     output["podcast_details"] = details
     output["podcast_summary"] = summary
     output["podcast_guest"] = guest
+    output["podcast_highlights"] = highlights
+    output["podcast_sentiment"] = sentiment
     print("process_podcast completed.")
     return output
 
