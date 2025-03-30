@@ -7,6 +7,8 @@ Welcome to the Podcast Summarizer project! This tool allows you to automatically
 <div align="center">
    <img src="content/podcast/group-8-mini-sem-6.gif" width="100%" max-width="800"/>
 </div>
+![Podcast Summarizer Demo](content/podcast/your_gif_name.gif)
+
 
 ## Demo
 
